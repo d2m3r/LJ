@@ -18,6 +18,9 @@
     --card-width: 420px;
   }
 
+  /* box sizing for predictable sizing */
+  *,*::before,*::after{box-sizing:border-box}
+
   html,body{
     height:100%;
     margin:0;
@@ -32,6 +35,9 @@
       url("background.jpg") center/cover no-repeat;
     background-attachment: fixed;
   }
+
+  /* Respect safe area for notch devices */
+  body { padding-top: calc(28px + env(safe-area-inset-top)); padding-bottom: calc(28px + env(safe-area-inset-bottom)); }
 
   .dots{
     position:fixed;
@@ -58,6 +64,10 @@
     padding:20px;
     z-index:1;
     border:1px solid rgba(169,107,255,0.06);
+
+    /* Prevent extreme vertical stretching on small screens */
+    max-height: calc(100vh - 56px);
+    overflow: auto;
   }
 
   .header{
@@ -77,7 +87,7 @@
 
   .title-block{display:flex;flex-direction:column;}
   .title{font-family:"Russo One",sans-serif;color:white;font-size:16px;letter-spacing:1px;}
-  .subtitle{font-size:11px;color:var(--muted);margin-top:6px;max-width:300px;}
+  .subtitle{font-size:11px;color:var(--muted);margin-top:6px;max-width:300px;word-break:break-word;}
 
   .body{display:flex;flex-direction:column;gap:16px;margin-top:14px;}
 
@@ -85,7 +95,8 @@
     background:linear-gradient(180deg,rgba(10,8,18,0.55),rgba(2,6,10,0.25));
     border-radius:12px;
     padding:14px;
-    min-height:360px;
+    /* make height flexible so it won't force the page to grow beyond viewport */
+    min-height: auto;
     border:1px solid rgba(255,255,255,0.03);
   }
 
@@ -113,6 +124,7 @@
     background:rgba(20,15,25,0.25);
     border-radius:8px;
     border:1px solid rgba(169,107,255,0.06);
+    width:100%;
   }
 
   .main-signal .value{
@@ -123,7 +135,7 @@
   }
 
   .main-signal .label{font-size:13px;color:var(--muted);}
-  .subtext{color:var(--muted);font-size:12px;margin-top:8px;}
+  .subtext{color:var(--muted);font-size:12px;margin-top:8px;text-align:center;}
 
   .controls{
     background:rgba(6,6,8,0.3);
@@ -152,25 +164,54 @@
   .progress>i{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width 650ms linear;}
 
   .meta{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);}
-  .footer{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);}
+  .footer{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);flex-wrap:wrap;gap:8px;}
 
-  @media(max-width:600px){
-    :root{--card-width:92vw;}
-    .main-signal .value{font-size:36px;}
+  /* Desktop small tweaks */
+  @media(max-width:900px){
+    :root{--card-width:360px;}
   }
 
-  /* ✅ ДОБАВЛЕНО: исправление растянутости на телефонах */
-  @media (max-width: 600px) {
+  /* Mobile adjustments */
+  @media(max-width:600px){
+    :root{--card-width:92vw;}
     body {
       align-items: flex-start;
-      padding-top: 40px;
+      padding:18px 12px 24px;
     }
     .card {
-      max-width: 360px;
+      max-width: 92vw;
       width: 100%;
       margin: 0 auto;
-      transform: scale(0.94);
+      border-radius:14px;
+      padding:14px;
+      /* allow more vertical space on mobile but keep max-height */
+      max-height: calc(100vh - 28px);
     }
+
+    .header{gap:10px;}
+    .logo{width:48px;height:48px;}
+    .title{font-size:15px;}
+    .subtitle{font-size:10px;max-width:220px}
+
+    .visual{padding:10px;}
+    .screen{padding:10px;font-size:13px;}
+    .result-wrap{min-height:140px;padding:10px;}
+    .main-signal .value{font-size:34px;}
+    .main-signal .label{font-size:12px;}
+    .subtext{font-size:11px}
+
+    .controls{padding:10px;gap:10px;}
+    .big-btn{padding:10px 12px;font-size:15px;border-radius:9px;}
+    .progress{height:7px}
+    .meta{font-size:11px;flex-wrap:wrap;gap:6px}
+    .footer{font-size:11px}
+  }
+
+  /* Very small devices */
+  @media(max-width:360px){
+    .main-signal .value{font-size:30px;}
+    .subtitle{max-width:160px}
+    .result-wrap{min-height:120px}
   }
 </style>
 </head>
@@ -242,4 +283,3 @@ getBtn.addEventListener("click",async()=>{if(getBtn.classList.contains("disabled
 </script>
 </body>
 </html>
-
