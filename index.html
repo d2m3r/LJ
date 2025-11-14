@@ -35,7 +35,6 @@
     background-attachment: fixed;
   }
 
-  /* Мобильная версия — без фона и эффектов */
   @media(max-width:600px){
     html, body {
       background: #050510 !important;
@@ -169,26 +168,109 @@
 </div>
 
 <script>
-const MIN_TOTAL=1.3,MAX_TOTAL=8,ANALYSIS_MS=1600,COUNTER_MS=1100,COOLDOWN_SEC=8;
-const buckets=[
-  {name:"A",min:2.5,max:4.3,weight:.5},
-  {name:"B",min:6.7,max:15,weight:.23},
-  {name:"C",weight:.27,parts:[{min:1.3,max:2.5},{min:4.3,max:6.7}]}
-];
-const getBtn=document.getElementById("getBtn"),mainValueEl=document.getElementById("mainValue"),
-subTextEl=document.getElementById("subText"),progressBar=document.getElementById("progressBar"),
-statusEl=document.getElementById("status"),cooldownEl=document.getElementById("cooldown");
+const MIN1 = 1.00, MAX1 = 3.00;   // 65%
+const MIN2 = 3.00, MAX2 = 5.00;   // 25%
+const MIN3 = 5.00, MAX3 = 15.00;  // 10%
+
+const ANALYSIS_MS=1600,COUNTER_MS=1100,COOLDOWN_SEC=8;
+
+const getBtn=document.getElementById("getBtn"),
+mainValueEl=document.getElementById("mainValue"),
+subTextEl=document.getElementById("subText"),
+progressBar=document.getElementById("progressBar"),
+statusEl=document.getElementById("status"),
+cooldownEl=document.getElementById("cooldown");
+
 let cooldownTimer=null,cooldownRemaining=0;
-function chooseBucket(){const r=Math.random();let acc=0;for(const b of buckets){acc+=b.weight;if(r<=acc)return b}return buckets[0]}
-function randInRange(min,max){return min+Math.random()*(max-min)}
-function generateSignalValue(){const b=chooseBucket();if(b.name==="C"){const p=b.parts,len0=p[0].max-p[0].min,len1=p[1].max-p[1].min,total=len0+len1,r=Math.random()*total;return r<len0?randInRange(p[0].min,p[0].max):randInRange(p[1].min,p[1].max)}return randInRange(b.min,b.max)}
+
+function rand(min,max){return min+Math.random()*(max-min)}
+
+// 🎯 НОВАЯ ЛОГИКА ШАНСОВ
+function generateSignalValue(){
+  const r = Math.random();
+
+  if(r <= 0.65){
+    return rand(MIN1, MAX1);       // 65%
+  }
+  if(r <= 0.65 + 0.25){
+    return rand(MIN2, MAX2);       // 25%
+  }
+  return rand(MIN3, MAX3);         // 10%
+}
+
 function formatSignal(v){return Number(v).toFixed(2)}
-function startAnalysis(){progressBar.style.width="0%";void progressBar.offsetWidth;progressBar.style.transition=`width ${ANALYSIS_MS}ms linear`;progressBar.style.width="100%";statusEl.textContent="analysis...";subTextEl.textContent="analysis was carried out"}
-function finishAnalysis(signal){progressBar.style.transition="width 300ms ease";progressBar.style.width="100%";statusEl.textContent="ready";animateSignalTo(signal,COUNTER_MS)}
-function animateSignalTo(target,dur){const s=performance.now(),end=Number(target);function ease(t){return 1-Math.pow(1-t,3)}function step(now){const e=now-s,t=Math.min(1,e/dur),v=ease(t)*end;mainValueEl.textContent=formatSignal(v);if(t<1)requestAnimationFrame(step);else{mainValueEl.textContent=formatSignal(end);subTextEl.textContent="analysis is completed"}}mainValueEl.textContent="0.00";requestAnimationFrame(step)}
-function startCooldown(){cooldownRemaining=COOLDOWN_SEC;cooldownEl.textContent=cooldownRemaining;getBtn.classList.add("disabled");statusEl.textContent="cooldown";cooldownTimer=setInterval(()=>{cooldownRemaining--;cooldownEl.textContent=cooldownRemaining;if(cooldownRemaining<=0){clearInterval(cooldownTimer);cooldownTimer=null;getBtn.classList.remove("disabled");cooldownEl.textContent="0";statusEl.textContent="ready"}},1e3)}
-getBtn.addEventListener("click",async()=>{if(getBtn.classList.contains("disabled"))return;startAnalysis();getBtn.classList.add("disabled");await new Promise(r=>setTimeout(r,ANALYSIS_MS));const raw=generateSignalValue();finishAnalysis(raw);startCooldown()});
-(function init(){mainValueEl.textContent="0.00";subTextEl.textContent="Status: pending";statusEl.textContent="ready";cooldownEl.textContent="0"})()
+
+function startAnalysis(){
+  progressBar.style.width="0%";
+  void progressBar.offsetWidth;
+  progressBar.style.transition=`width ${ANALYSIS_MS}ms linear`;
+  progressBar.style.width="100%";
+  statusEl.textContent="analysis...";
+  subTextEl.textContent="analysis was carried out";
+}
+
+function finishAnalysis(signal){
+  progressBar.style.transition="width 300ms ease";
+  progressBar.style.width="100%";
+  statusEl.textContent="ready";
+  animateSignalTo(signal,COUNTER_MS);
+}
+
+function animateSignalTo(target,dur){
+  const start=performance.now(),end=Number(target);
+  function ease(t){return 1-Math.pow(1-t,3)}
+  function step(now){
+    const e=now-start,t=Math.min(1,e/dur),v=ease(t)*end;
+    mainValueEl.textContent=formatSignal(v);
+    if(t<1)requestAnimationFrame(step);
+    else{
+      mainValueEl.textContent=formatSignal(end);
+      subTextEl.textContent="analysis is completed";
+    }
+  }
+  mainValueEl.textContent="0.00";
+  requestAnimationFrame(step);
+}
+
+function startCooldown(){
+  cooldownRemaining=COOLDOWN_SEC;
+  cooldownEl.textContent=cooldownRemaining;
+  getBtn.classList.add("disabled");
+  statusEl.textContent="cooldown";
+
+  cooldownTimer=setInterval(()=>{
+    cooldownRemaining--;
+    cooldownEl.textContent=cooldownRemaining;
+    if(cooldownRemaining<=0){
+      clearInterval(cooldownTimer);
+      cooldownTimer=null;
+      getBtn.classList.remove("disabled");
+      cooldownEl.textContent="0";
+      statusEl.textContent="ready";
+    }
+  },1000)
+}
+
+getBtn.addEventListener("click",async()=>{
+  if(getBtn.classList.contains("disabled"))return;
+
+  startAnalysis();
+  getBtn.classList.add("disabled");
+
+  await new Promise(r=>setTimeout(r,ANALYSIS_MS));
+
+  const final = generateSignalValue();
+  finishAnalysis(final);
+
+  startCooldown();
+});
+
+(function init(){
+  mainValueEl.textContent="0.00";
+  subTextEl.textContent="Status: pending";
+  statusEl.textContent="ready";
+  cooldownEl.textContent="0";
+})();
 </script>
 </body>
 </html>
